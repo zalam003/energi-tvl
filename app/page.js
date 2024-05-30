@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import 'chart.js/auto';
@@ -39,4 +41,3 @@ const TVLChart = () => {
 };
 
 export default TVLChart;
-
