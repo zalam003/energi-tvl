@@ -13,7 +13,15 @@ const fetchData = async () => {
   return data;
 };
 
-const createChartData = (tokenData, tokenName) => {
+const colorPalette = [
+  'rgba(75, 192, 192, 1)',
+  'rgba(255, 99, 132, 1)',
+  'rgba(54, 162, 235, 1)',
+  'rgba(255, 206, 86, 1)',
+  'rgba(153, 102, 255, 1)',
+];
+
+const createChartData = (tokenData, tokenName, color) => {
   const labels = tokenData.map(entry => entry.date);
   const data = tokenData.map(entry => entry.usd_value);
 
@@ -23,8 +31,8 @@ const createChartData = (tokenData, tokenName) => {
       {
         label: `${tokenName} USD Value`,
         data,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: color,
+        backgroundColor: color.replace('1)', '0.2)'),
         fill: true,
       },
     ],
@@ -52,7 +60,7 @@ const Page = () => {
           }>
             Overview
           </Tab>
-          {tokenData.map((token) => (
+          {tokenData.map((token, index) => (
             <Tab key={token.name} className={({ selected }) =>
               selected ? 'bg-white shadow' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
             }>
@@ -67,21 +75,21 @@ const Page = () => {
               <Line
                 data={{
                   labels: tokenData[0].data.map(entry => entry.date),
-                  datasets: tokenData.map(token => ({
+                  datasets: tokenData.map((token, index) => ({
                     label: `${token.name} USD Value`,
                     data: token.data.map(entry => entry.usd_value),
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: colorPalette[index % colorPalette.length],
+                    backgroundColor: colorPalette[index % colorPalette.length].replace('1)', '0.2)'),
                     fill: true,
                   })),
                 }}
               />
             )}
           </Tab.Panel>
-          {tokenData.map((token) => (
+          {tokenData.map((token, index) => (
             <Tab.Panel key={token.name}>
               <h2 className="text-xl font-bold mb-4">{token.name} USD Value Over Time</h2>
-              <Line data={createChartData(token.data, token.name)} />
+              <Line data={createChartData(token.data, token.name, colorPalette[index % colorPalette.length])} />
             </Tab.Panel>
           ))}
         </Tab.Panels>
