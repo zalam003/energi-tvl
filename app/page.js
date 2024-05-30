@@ -54,15 +54,15 @@ const Page = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Total Value Locked (TVL): ${totalValueLocked.toLocaleString()}</h1>
       <Tab.Group>
-        <Tab.List className="flex space-x-1 bg-blue-900/20 p-1">
+        <Tab.List className="flex space-x-4 bg-blue-900/20 p-1">
           <Tab className={({ selected }) =>
-            selected ? 'bg-white shadow' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+            selected ? 'bg-white shadow px-4 py-2 rounded-md' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white px-4 py-2 rounded-md'
           }>
             Overview
           </Tab>
           {tokenData.map((token, index) => (
             <Tab key={token.name} className={({ selected }) =>
-              selected ? 'bg-white shadow' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+              selected ? 'bg-white shadow px-4 py-2 rounded-md' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white px-4 py-2 rounded-md'
             }>
               {token.name}
             </Tab>
