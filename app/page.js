@@ -7,12 +7,6 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-// const fetchData = async () => {
-//   const response = await fetch('/api/tvl');
-//   const data = await response.json();
-//   return data;
-// };
-
 const colorPalette = [
   'rgba(75, 192, 192, 1)',
   'rgba(255, 99, 132, 1)',
