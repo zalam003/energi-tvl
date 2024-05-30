@@ -51,6 +51,30 @@ async function saveTokenData(tokenData, totalValueLocked) {
   }
 }
 
+async function fetchTokenHistoricalData() {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `SELECT token_name, date, usd_value
+      FROM token_data
+      ORDER BY date ASC`
+    );
+    const historicalData = result.rows.reduce((acc, row) => {
+      if (!acc[row.token_name]) {
+        acc[row.token_name] = [];
+      }
+      acc[row.token_name].push({
+        date: row.date,
+        usd_value: row.usd_value
+      });
+      return acc;
+    }, {});
+    return historicalData;
+  } finally {
+    client.release();
+  }
+}
+
 export async function GET() {
   const jsonDirectory = path.join(process.cwd(), 'app/api/tvl/tokens.json');
   const fileContents = await fs.readFile(jsonDirectory, 'utf8');
@@ -74,8 +98,13 @@ export async function GET() {
 
   await saveTokenData(tokenData, totalValueLocked);
 
+  const historicalData = await fetchTokenHistoricalData();
+
   return NextResponse.json({
-    tokens: tokenData,
+    tokens: tokens.map(token => ({
+      ...token,
+      data: historicalData[token.name] || []
+    })),
     totalValueLocked
   });
 }

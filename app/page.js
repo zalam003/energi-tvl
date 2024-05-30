@@ -1,43 +1,53 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from 'react';
-import { Bar } from 'react-chartjs-2';
-import 'chart.js/auto';
+import React, { useState, useEffect } from 'react';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 
-const TVLChart = () => {
-  const [chartData, setChartData] = useState(null);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+const fetchData = async () => {
+  const response = await fetch('/api/tvl');
+  const data = await response.json();
+  return data;
+};
+
+const createChartData = (tokenData, tokenName) => {
+  const labels = tokenData.map(entry => entry.date);
+  const data = tokenData.map(entry => entry.usd_value);
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: `${tokenName} USD Value`,
+        data,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: true,
+      },
+    ],
+  };
+};
+
+const Page = () => {
+  const [tokenData, setTokenData] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetch('/api/tvl');
-      const data = await response.json();
-      setChartData(data);
-    };
-    fetchData();
+    fetchData().then(data => setTokenData(data.tokens));
   }, []);
-
-  if (!chartData) {
-    return <div>Loading...</div>;
-  }
-
-  const dates = chartData.tokens.map(token => token.date);
-  const usdValues = chartData.tokens.map(token => token.usd_value);
-
-  const data = {
-    labels: dates,
-    datasets: chartData.tokens.map((token, index) => ({
-      label: token.name,
-      data: usdValues[index],
-      backgroundColor: `rgba(${index * 50}, ${100 + index * 20}, ${150 + index * 30}, 0.6)`,
-    })),
-  };
 
   return (
     <div>
-      <h1>TVL Chart</h1>
-      <Bar data={data} />
+      <h1>Token Values Over Time</h1>
+      {tokenData.length > 0 && tokenData.map(token => (
+        <div key={token.name}>
+          <h2>{token.name}</h2>
+          <Line data={createChartData(token.data, token.name)} />
+        </div>
+      ))}
     </div>
   );
 };
 
-export default TVLChart;
+export default Page;
