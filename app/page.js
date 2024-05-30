@@ -7,11 +7,11 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-// const fetchData = async () => {
-//   const response = await fetch('/api/tvl');
-//   const data = await response.json();
-//   return data;
-// };
+const fetchData = async () => {
+  const response = await fetch('/api/tvl');
+  const data = await response.json();
+  return data;
+};
 
 const colorPalette = [
   'rgba(75, 192, 192, 1)',
@@ -72,18 +72,21 @@ const Page = () => {
           <Tab.Panel>
             <h2 className="text-xl font-bold mb-4">Total TVL for All Tokens</h2>
             {tokenData.length > 0 && (
-              <Line
-                data={{
-                  labels: tokenData[0].data.map(entry => entry.date),
-                  datasets: tokenData.map((token, index) => ({
-                    label: `${token.name} USD Value`,
-                    data: token.data.map(entry => entry.usd_value),
-                    borderColor: colorPalette[index % colorPalette.length],
-                    backgroundColor: colorPalette[index % colorPalette.length].replace('1)', '0.2)'),
-                    fill: true,
-                  })),
-                }}
-              />
+              <>
+                <p className="mb-4">Total Value Locked: ${totalValueLocked.toLocaleString()}</p>
+                <Line
+                  data={{
+                    labels: tokenData[0].data.map(entry => entry.date),
+                    datasets: tokenData.map((token, index) => ({
+                      label: `${token.name} USD Value`,
+                      data: token.data.map(entry => entry.usd_value),
+                      borderColor: colorPalette[index % colorPalette.length],
+                      backgroundColor: colorPalette[index % colorPalette.length].replace('1)', '0.2)'),
+                      fill: true,
+                    })),
+                  }}
+                />
+              </>
             )}
           </Tab.Panel>
           {tokenData.map((token, index) => (
