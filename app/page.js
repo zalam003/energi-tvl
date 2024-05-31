@@ -7,6 +7,12 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
+const fetchData = async () => {
+  const response = await fetch('/api/tvl');
+  const data = await response.json();
+  return data;
+};
+
 const colorPalette = [
   'rgba(75, 192, 192, 1)',
   'rgba(255, 99, 132, 1)',
@@ -44,6 +50,29 @@ const Page = () => {
     });
   }, []);
 
+  const totalTvlChartData = () => {
+    const labels = tokenData.length > 0 ? tokenData[0].data.map(entry => entry.date) : [];
+    const data = tokenData.reduce((acc, token) => {
+      token.data.forEach((entry, index) => {
+        acc[index] = (acc[index] || 0) + entry.usd_value;
+      });
+      return acc;
+    }, []);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Total TVL',
+          data,
+          borderColor: 'rgba(255, 159, 64, 1)',
+          backgroundColor: 'rgba(255, 159, 64, 0.2)',
+          fill: true,
+        },
+      ],
+    };
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Total Value Locked (TVL): ${totalValueLocked.toLocaleString()}</h1>
@@ -53,6 +82,11 @@ const Page = () => {
             selected ? 'bg-white shadow px-4 py-2 rounded-md' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white px-4 py-2 rounded-md'
           }>
             Overview
+          </Tab>
+          <Tab className={({ selected }) =>
+            selected ? 'bg-white shadow px-4 py-2 rounded-md' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white px-4 py-2 rounded-md'
+          }>
+            TVL
           </Tab>
           {tokenData.map((token, index) => (
             <Tab key={token.name} className={({ selected }) =>
@@ -66,22 +100,23 @@ const Page = () => {
           <Tab.Panel>
             <h2 className="text-xl font-bold mb-4">Total TVL for All Tokens</h2>
             {tokenData.length > 0 && (
-              <>
-                <p className="mb-4">Total Value Locked: ${totalValueLocked.toLocaleString()}</p>
-                <Line
-                  data={{
-                    labels: tokenData[0].data.map(entry => entry.date),
-                    datasets: tokenData.map((token, index) => ({
-                      label: `${token.name} USD Value`,
-                      data: token.data.map(entry => entry.usd_value),
-                      borderColor: colorPalette[index % colorPalette.length],
-                      backgroundColor: colorPalette[index % colorPalette.length].replace('1)', '0.2)'),
-                      fill: true,
-                    })),
-                  }}
-                />
-              </>
+              <Line
+                data={{
+                  labels: tokenData[0].data.map(entry => entry.date),
+                  datasets: tokenData.map((token, index) => ({
+                    label: `${token.name} USD Value`,
+                    data: token.data.map(entry => entry.usd_value),
+                    borderColor: colorPalette[index % colorPalette.length],
+                    backgroundColor: colorPalette[index % colorPalette.length].replace('1)', '0.2)'),
+                    fill: true,
+                  })),
+                }}
+              />
             )}
+          </Tab.Panel>
+          <Tab.Panel>
+            <h2 className="text-xl font-bold mb-4">Total Value Locked (TVL) Over Time</h2>
+            <Line data={totalTvlChartData()} />
           </Tab.Panel>
           {tokenData.map((token, index) => (
             <Tab.Panel key={token.name}>
