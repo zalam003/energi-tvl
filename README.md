@@ -2,7 +2,20 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First, run the development server:
+First, run the development server locally:
+
+Set up `.env`:
+
+```bash
+POSTGRES_USER=your_db_user
+POSTGRES_PASSWORD=your_db_password
+POSTGRES_HOST=your_db_host
+POSTGRES_DATABASE=your_db_name
+POSTGRES_PORT=5432
+PGSSLMODE=require
+```
+
+Run the following:
 
 ```bash
 npm run dev
