@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
-import path from 'path';
-import { promises as fs } from 'fs';
-import pool from '../../../config/db';
+// run from external cron-job
+// https://https://energi-tvl.vercel.app/api/tvl/fetch-data
+
+// fetch-data.js
+const cron = require('node-cron');
+const fetch = require('node-fetch');
+const pool = require('../../config/db');
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/simple/price';
 
@@ -51,7 +54,37 @@ async function saveTokenData(tokenData, totalValueLocked) {
   }
 }
 
-export async function GET() {
+async function fetchTokenHistoricalData() {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `SELECT token_name, date, usd_value AS close,
+              LAG(usd_value) OVER (PARTITION BY token_name ORDER BY date) AS open,
+              MAX(usd_value) OVER (PARTITION BY token_name ORDER BY date) AS high,
+              MIN(usd_value) OVER (PARTITION BY token_name ORDER BY date) AS low
+      FROM token_data
+      ORDER BY date ASC`
+    );
+    const historicalData = result.rows.reduce((acc, row) => {
+      if (!acc[row.token_name]) {
+        acc[row.token_name] = [];
+      }
+      acc[row.token_name].push({
+        date: row.date,
+        open: row.open,
+        high: row.high,
+        low: row.low,
+        close: row.close
+      });
+      return acc;
+    }, {});
+    return historicalData;
+  } finally {
+    client.release();
+  }
+}
+
+async function fetchDataAndSave() {
   const jsonDirectory = path.join(process.cwd(), 'app/api/tvl/tokens.json');
   const fileContents = await fs.readFile(jsonDirectory, 'utf8');
   const tokens = JSON.parse(fileContents);
@@ -66,13 +99,21 @@ export async function GET() {
       price,
       supply,
       usd_value: price * supply
-    });
+    };
   });
 
   const tokenData = await Promise.all(tokenDataPromises);
   const totalValueLocked = tokenData.reduce((sum, token) => sum + token.usd_value, 0);
 
   await saveTokenData(tokenData, totalValueLocked);
-
-  return NextResponse.json({ message: 'Data fetched and saved successfully' });
 }
+
+// Schedule cron job to fetch and save data every 6 hours
+cron.schedule('0 */6 * * *', async () => {
+  try {
+    await fetchDataAndSave();
+    console.log('Data fetched and saved successfully.');
+  } catch (error) {
+    console.error('Error fetching or saving data:', error);
+  }
+});

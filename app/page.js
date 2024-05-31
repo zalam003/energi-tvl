@@ -1,10 +1,10 @@
-'use client';
-
+// page.js
 import React, { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale } from 'chart.js';
-import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale, CandlestickController, CandlestickElement } from 'chart.js';
+import 'chartjs-adapter-date-fns';
+import { useChart } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale, CandlestickController, CandlestickElement);
 
@@ -25,7 +25,7 @@ const colorPalette = [
 
 const createCandlestickData = (tokenData) => {
   return tokenData.map(entry => ({
-    x: entry.date,
+    t: entry.date,
     o: entry.open,
     h: entry.high,
     l: entry.low,
@@ -84,13 +84,14 @@ const HomePage = () => {
                   },
                 }}
               />
-              <Candlestick
+              <Line
                 data={{
                   datasets: [{
                     label: 'Candlestick',
                     data: createCandlestickData(token.data),
                     borderColor: colorPalette[index % colorPalette.length],
                     backgroundColor: colorPalette[index % colorPalette.length],
+                    type: 'candlestick',
                   }]
                 }}
                 options={{
