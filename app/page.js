@@ -1,18 +1,6 @@
-// page.js
 import React, { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale, CandlestickController, CandlestickElement } from 'chart.js';
-import 'chartjs-adapter-date-fns';
-import { useChart } from 'react-chartjs-2';
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale, CandlestickController, CandlestickElement);
-
-const fetchData = async () => {
-  const response = await fetch('/api/tvl');
-  const data = await response.json();
-  return data;
-};
+import { Line } from 'react-chartjs-2'; // Importing Line directly from react-chartjs-2
 
 const colorPalette = [
   'rgba(75, 192, 192, 1)',
@@ -23,14 +11,10 @@ const colorPalette = [
   'rgba(255, 159, 64, 1)',
 ];
 
-const createCandlestickData = (tokenData) => {
-  return tokenData.map(entry => ({
-    t: entry.date,
-    o: entry.open,
-    h: entry.high,
-    l: entry.low,
-    c: entry.close,
-  }));
+const fetchData = async () => {
+  const response = await fetch('/api/tvl');
+  const data = await response.json();
+  return data;
 };
 
 const HomePage = () => {
@@ -59,6 +43,7 @@ const HomePage = () => {
         <Tab.Panels>
           {tokens.map((token, index) => (
             <Tab.Panel key={index}>
+              <h2>{token.name} Price Chart</h2>
               <Line
                 data={{
                   labels: token.data.map((d) => d.date),
@@ -80,46 +65,6 @@ const HomePage = () => {
                     title: {
                       display: true,
                       text: `${token.name} Price Chart`,
-                    },
-                  },
-                }}
-              />
-              <Line
-                data={{
-                  datasets: [{
-                    label: 'Candlestick',
-                    data: createCandlestickData(token.data),
-                    borderColor: colorPalette[index % colorPalette.length],
-                    backgroundColor: colorPalette[index % colorPalette.length],
-                    type: 'candlestick',
-                  }]
-                }}
-                options={{
-                  plugins: {
-                    legend: {
-                      display: false,
-                    },
-                    title: {
-                      display: true,
-                      text: `${token.name} Candlestick Chart`,
-                    },
-                  },
-                  scales: {
-                    x: {
-                      type: 'time',
-                      time: {
-                        unit: 'day',
-                      },
-                      title: {
-                        display: true,
-                        text: 'Date',
-                      },
-                    },
-                    y: {
-                      title: {
-                        display: true,
-                        text: 'Price (USD)',
-                      },
                     },
                   },
                 }}
