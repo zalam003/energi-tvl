@@ -1,3 +1,6 @@
+// page.js
+'use client'; // Ensure the entire file is treated as a Client Component
+
 import React, { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
 import { Line } from 'react-chartjs-2'; // Importing Line directly from react-chartjs-2
