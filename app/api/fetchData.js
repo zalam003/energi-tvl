@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
-import tokens from './api/tokens.json';
+import tokens from './tvl/tokens.json';
 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
