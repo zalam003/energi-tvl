@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale } from 'chart.js';
+import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale, CandlestickController, CandlestickElement);
 
 const fetchData = async () => {
   const response = await fetch('/api/tvl');
@@ -19,109 +20,109 @@ const colorPalette = [
   'rgba(54, 162, 235, 1)',
   'rgba(255, 206, 86, 1)',
   'rgba(153, 102, 255, 1)',
+  'rgba(255, 159, 64, 1)',
 ];
 
-const createChartData = (tokenData, tokenName, color) => {
-  const labels = tokenData.map(entry => entry.date);
-  const data = tokenData.map(entry => entry.usd_value);
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: `${tokenName} USD Value`,
-        data,
-        borderColor: color,
-        backgroundColor: color.replace('1)', '0.2)'),
-        fill: true,
-      },
-    ],
-  };
+const createCandlestickData = (tokenData) => {
+  return tokenData.map(entry => ({
+    x: entry.date,
+    o: entry.open,
+    h: entry.high,
+    l: entry.low,
+    c: entry.close,
+  }));
 };
 
-const Page = () => {
-  const [tokenData, setTokenData] = useState([]);
+const HomePage = () => {
+  const [tokens, setTokens] = useState([]);
   const [totalValueLocked, setTotalValueLocked] = useState(0);
 
   useEffect(() => {
-    fetchData().then(data => {
-      setTokenData(data.tokens);
+    const getData = async () => {
+      const data = await fetchData();
+      setTokens(data.tokens);
       setTotalValueLocked(data.totalValueLocked);
-    });
+    };
+
+    getData();
   }, []);
 
-  const totalTvlChartData = () => {
-    const labels = tokenData.length > 0 ? tokenData[0].data.map(entry => entry.date) : [];
-    const data = tokenData.reduce((acc, token) => {
-      token.data.forEach((entry, index) => {
-        acc[index] = (acc[index] || 0) + entry.usd_value;
-      });
-      return acc;
-    }, []);
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Total TVL',
-          data,
-          borderColor: 'rgba(255, 159, 64, 1)',
-          backgroundColor: 'rgba(255, 159, 64, 0.2)',
-          fill: true,
-        },
-      ],
-    };
-  };
-
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Total Value Locked (TVL): ${totalValueLocked.toLocaleString()}</h1>
+    <div>
+      <h1>Total Value Locked (TVL): ${totalValueLocked.toLocaleString()}</h1>
       <Tab.Group>
-        <Tab.List className="flex space-x-4 bg-blue-900/20 p-1">
-          <Tab className={({ selected }) =>
-            selected ? 'bg-white shadow px-4 py-2 rounded-md' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white px-4 py-2 rounded-md'
-          }>
-            Overview
-          </Tab>
-          <Tab className={({ selected }) =>
-            selected ? 'bg-white shadow px-4 py-2 rounded-md' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white px-4 py-2 rounded-md'
-          }>
-            TVL
-          </Tab>
-          {tokenData.map((token, index) => (
-            <Tab key={token.name} className={({ selected }) =>
-              selected ? 'bg-white shadow px-4 py-2 rounded-md' : 'text-blue-100 hover:bg-white/[0.12] hover:text-white px-4 py-2 rounded-md'
-            }>
-              {token.name}
-            </Tab>
+        <Tab.List>
+          {tokens.map((token, index) => (
+            <Tab key={index}>{token.name}</Tab>
           ))}
         </Tab.List>
-        <Tab.Panels className="mt-2">
-          <Tab.Panel>
-            <h2 className="text-xl font-bold mb-4">Total TVL for All Tokens</h2>
-            {tokenData.length > 0 && (
+        <Tab.Panels>
+          {tokens.map((token, index) => (
+            <Tab.Panel key={index}>
               <Line
                 data={{
-                  labels: tokenData[0].data.map(entry => entry.date),
-                  datasets: tokenData.map((token, index) => ({
-                    label: `${token.name} USD Value`,
-                    data: token.data.map(entry => entry.usd_value),
-                    borderColor: colorPalette[index % colorPalette.length],
-                    backgroundColor: colorPalette[index % colorPalette.length].replace('1)', '0.2)'),
-                    fill: true,
-                  })),
+                  labels: token.data.map((d) => d.date),
+                  datasets: [
+                    {
+                      label: 'USD Value',
+                      data: token.data.map((d) => d.usd_value),
+                      borderColor: colorPalette[index % colorPalette.length],
+                      backgroundColor: 'rgba(0, 0, 0, 0)',
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                    },
+                    title: {
+                      display: true,
+                      text: `${token.name} Price Chart`,
+                    },
+                  },
                 }}
               />
-            )}
-          </Tab.Panel>
-          <Tab.Panel>
-            <h2 className="text-xl font-bold mb-4">Total Value Locked (TVL) Over Time</h2>
-            <Line data={totalTvlChartData()} />
-          </Tab.Panel>
-          {tokenData.map((token, index) => (
-            <Tab.Panel key={token.name}>
-              <h2 className="text-xl font-bold mb-4">{token.name} USD Value Over Time</h2>
-              <Line data={createChartData(token.data, token.name, colorPalette[index % colorPalette.length])} />
+              <Candlestick
+                data={{
+                  datasets: [{
+                    label: 'Candlestick',
+                    data: createCandlestickData(token.data),
+                    borderColor: colorPalette[index % colorPalette.length],
+                    backgroundColor: colorPalette[index % colorPalette.length],
+                  }]
+                }}
+                options={{
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                    title: {
+                      display: true,
+                      text: `${token.name} Candlestick Chart`,
+                    },
+                  },
+                  scales: {
+                    x: {
+                      type: 'time',
+                      time: {
+                        unit: 'day',
+                      },
+                      title: {
+                        display: true,
+                        text: 'Date',
+                      },
+                    },
+                    y: {
+                      title: {
+                        display: true,
+                        text: 'Price (USD)',
+                      },
+                    },
+                  },
+                }}
+              />
             </Tab.Panel>
           ))}
         </Tab.Panels>
@@ -130,4 +131,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default HomePage;
